@@ -1293,7 +1293,7 @@ class CLIPModel(CLIPPreTrainedModel):
         vision_outputs = self.vision_model(
             pixel_values=pixel_values,
             output_attentions=output_attentions,
-            output_hidden_states=output_hidden_states,
+            output_hidden_states=True,
             return_dict=return_dict,
         )
 
@@ -1306,7 +1306,14 @@ class CLIPModel(CLIPPreTrainedModel):
             return_dict=return_dict,
         )
 
-        image_embeds = vision_outputs[1]
+        # image_embeds = vision_outputs[1]
+        
+        # align with llava
+        print('CLIPModel calling forward() using modified code') 
+        vision_feature_layer = -2
+        # pooled on the first image patch -> cls token  
+        image_embeds = vision_outputs.hidden_states[vision_feature_layer][:, 0, :] 
+        
         image_embeds = self.visual_projection(image_embeds)
 
         text_embeds = text_outputs[1]
