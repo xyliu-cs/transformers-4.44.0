@@ -1306,14 +1306,16 @@ class CLIPModel(CLIPPreTrainedModel):
             return_dict=return_dict,
         )
 
+        # --------------------------------------
+        #        Modified Plot 1 / 2
+        # --------------------------------------
         # image_embeds = vision_outputs[1]
-        
-        # align with llava
+        # Align with llava to use -2 layer
         print('CLIPModel calling forward() using modified code') 
-        vision_feature_layer = -2
+        vision_feature_layer = -2        
         # pooled on the first image patch -> cls token  
         image_embeds = vision_outputs.hidden_states[vision_feature_layer][:, 0, :] 
-        
+
         image_embeds = self.visual_projection(image_embeds)
 
         text_embeds = text_outputs[1]
@@ -1323,11 +1325,16 @@ class CLIPModel(CLIPPreTrainedModel):
         image_embeds = image_embeds / image_embeds.norm(p=2, dim=-1, keepdim=True)
         text_embeds = text_embeds / text_embeds.norm(p=2, dim=-1, keepdim=True)
 
+        # --------------------------------------
+        #        Modified Plot 2 / 2
+        # --------------------------------------
         # cosine similarity as logits
-        logit_scale = self.logit_scale.exp()
-        logits_per_text = torch.matmul(text_embeds, image_embeds.t().to(text_embeds.device)) * logit_scale.to(
-            text_embeds.device
-        )
+        # logit_scale = self.logit_scale.exp()
+        # logits_per_text = torch.matmul(text_embeds, image_embeds.t().to(text_embeds.device)) * logit_scale.to(
+        #     text_embeds.device
+        # )
+        # Omit the logit scale to output cosine similarities
+        logits_per_text = torch.matmul(text_embeds, image_embeds.t().to(text_embeds.device))
         logits_per_image = logits_per_text.t()
 
         loss = None
